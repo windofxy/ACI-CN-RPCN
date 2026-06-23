@@ -1,0 +1,20 @@
+volumes:
+  rpcnstorage:
+    name: rpcnstorage
+    driver: local
+    driver_opts:
+      # Use your preferred storage path here, it must already exist
+      device: /home/$USER/rpcn_data
+      o: bind
+      type: none
+
+services:
+  rpcn:
+    container_name: rpcn
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - rpcnstorage:/rpcn
+    # Only works on Linux currently
+    network_mode: host
