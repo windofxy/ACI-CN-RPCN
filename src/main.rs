@@ -33,6 +33,7 @@ pub struct Config {
 	server_redirs: HashMap<ComId, ComId>,
 	ticket_signature_info: Option<TicketSignInfo>,
 	stat_server_host_and_port: Option<(String, String)>,
+	public_api_host_and_port: Option<(String, String)>,
 	stat_server_path: String,
 	stat_server_cache_life: u32,
 	admins_list: Vec<String>,
@@ -51,6 +52,7 @@ impl Config {
 			server_redirs: HashMap::new(),
 			ticket_signature_info: None,
 			stat_server_host_and_port: None,
+			public_api_host_and_port: None,
 			stat_server_path: "rpcn_stats".to_string(),
 			stat_server_cache_life: 0,
 			admins_list: Vec::new(),
@@ -200,6 +202,12 @@ impl Config {
 			}
 		}
 
+		let public_api_host = config_data.get("PublicAPIHost").copied().unwrap_or_default().to_string();
+		let public_api_port = config_data.get("PublicAPIPort").copied().unwrap_or_default().to_string();
+		if !public_api_host.is_empty() && !public_api_port.is_empty() {
+			self.public_api_host_and_port = Some((public_api_host, public_api_port));
+		}
+
 		set_admins_list(&mut self.admins_list);
 
 		Ok(())
@@ -275,6 +283,10 @@ impl Config {
 
 	pub fn get_stat_server_binds(&self) -> &Option<(String, String)> {
 		&self.stat_server_host_and_port
+	}
+
+	pub fn get_public_api_binds(&self) -> &Option<(String, String)> {
+		&self.public_api_host_and_port
 	}
 
 	pub fn get_stat_server_cache_life(&self) -> u32 {

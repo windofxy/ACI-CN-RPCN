@@ -25,10 +25,8 @@ fn decode_url_component(input: &str) -> Result<String, String> {
 				return Err("EmailUrl contains an invalid percent-encoded mailbox".to_string());
 			}
 
-			let hex_value = std::str::from_utf8(&bytes[index + 1..index + 3])
-				.map_err(|_| "EmailUrl contains an invalid percent-encoded mailbox".to_string())?;
-			let byte = u8::from_str_radix(hex_value, 16)
-				.map_err(|_| "EmailUrl contains an invalid percent-encoded mailbox".to_string())?;
+			let hex_value = std::str::from_utf8(&bytes[index + 1..index + 3]).map_err(|_| "EmailUrl contains an invalid percent-encoded mailbox".to_string())?;
+			let byte = u8::from_str_radix(hex_value, 16).map_err(|_| "EmailUrl contains an invalid percent-encoded mailbox".to_string())?;
 			decoded.push(byte);
 			index += 3;
 		} else {
@@ -45,16 +43,12 @@ fn email_recipient_from_url(email_url: &str) -> Result<String, String> {
 	let authority_and_path = &email_url[scheme_pos + 3..];
 	let authority_end = authority_and_path.find(|c| ['/', '?', '#'].contains(&c)).unwrap_or(authority_and_path.len());
 	let authority = &authority_and_path[..authority_end];
-	let userinfo_end = authority
-		.rfind('@')
-		.ok_or_else(|| "EmailUrl must include a mailbox before the SMTP host".to_string())?;
+	let userinfo_end = authority.rfind('@').ok_or_else(|| "EmailUrl must include a mailbox before the SMTP host".to_string())?;
 	let userinfo = &authority[..userinfo_end];
 	let mailbox_raw = userinfo.split_once(':').map_or(userinfo, |(mailbox, _)| mailbox);
 	let mailbox = decode_url_component(mailbox_raw)?;
 
-	mailbox
-		.parse::<lettre::Address>()
-		.map_err(|e| format!("EmailUrl mailbox is invalid({}): {}", mailbox, e))?;
+	mailbox.parse::<lettre::Address>().map_err(|e| format!("EmailUrl mailbox is invalid({}): {}", mailbox, e))?;
 
 	Ok(mailbox)
 }
@@ -104,12 +98,7 @@ impl Client {
 	}
 
 	fn send_token_mail(&self, email_addr: &str, npid: &str, token: &str) -> Result<(), String> {
-		self.send_email_template(
-			email_addr,
-			npid,
-			&format!("{}'s token for ACI-CN", npid),
-			format!("Your token for username {} is:\n{}", npid, token),
-		)
+		self.send_email_template(email_addr, npid, &format!("{}'s token for ACI-CN", npid), format!("Your token for username {} is:\n{}", npid, token))
 	}
 
 	fn send_reset_token_mail(&self, email_addr: &str, npid: &str, reset_token: &str) -> Result<(), String> {

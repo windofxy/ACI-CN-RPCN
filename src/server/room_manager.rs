@@ -992,6 +992,14 @@ pub struct RoomManager {
 	user_rooms: HashMap<i64, HashSet<(ComId, u64)>>,  // List of user / list of rooms
 }
 
+pub struct RoomSnapshot {
+	pub communication_id: ComId,
+	pub current_player_count: u32,
+	pub max_player_count: u32,
+	pub room_data_external: RoomDataExternal,
+	pub room_data_internal: RoomDataInternal,
+}
+
 impl RoomManager {
 	pub fn new() -> RoomManager {
 		RoomManager {
@@ -1001,6 +1009,17 @@ impl RoomManager {
 			lobby_rooms: HashMap::new(),
 			user_rooms: HashMap::new(),
 		}
+	}
+
+	fn get_public_room_data_external(room: &Room) -> RoomDataExternal {
+		let mut attr_ids = Vec::with_capacity(11);
+		for attr_id in SCE_NP_MATCHING2_ROOM_SEARCHABLE_INT_ATTR_EXTERNAL_1_ID..=SCE_NP_MATCHING2_ROOM_SEARCHABLE_INT_ATTR_EXTERNAL_8_ID {
+			attr_ids.push(attr_id);
+		}
+		attr_ids.push(SCE_NP_MATCHING2_ROOM_SEARCHABLE_BIN_ATTR_EXTERNAL_1_ID);
+		attr_ids.push(SCE_NP_MATCHING2_ROOM_BIN_ATTR_EXTERNAL_1_ID);
+		attr_ids.push(SCE_NP_MATCHING2_ROOM_BIN_ATTR_EXTERNAL_2_ID);
+		room.to_RoomDataExternal(7, &attr_ids)
 	}
 
 	pub fn room_exists(&self, com_id: &ComId, room_id: u64) -> bool {
@@ -1020,6 +1039,24 @@ impl RoomManager {
 
 		let room = self.get_room(com_id, room_id);
 		Ok((room.server_id, room.world_id, room.lobby_id))
+	}
+
+	pub fn list_room_snapshots(&self, filter_com_id: Option<&ComId>) -> Vec<RoomSnapshot> {
+		let mut room_snapshots: Vec<RoomSnapshot> = self
+			.rooms
+			.iter()
+			.filter(|((communication_id, _), _)| filter_com_id.is_none_or(|filter_com_id| communication_id == filter_com_id))
+			.map(|((communication_id, _), room)| RoomSnapshot {
+				communication_id: *communication_id,
+				current_player_count: room.users.len() as u32,
+				max_player_count: room.max_slot as u32,
+				room_data_external: RoomManager::get_public_room_data_external(room),
+				room_data_internal: room.to_RoomDataInternal(),
+			})
+			.collect();
+
+		room_snapshots.sort_by_key(|room_snapshot| (room_snapshot.communication_id, room_snapshot.room_data_internal.room_id));
+		room_snapshots
 	}
 
 	fn unfailing_create_room(&mut self, room_id: u64, com_id: &ComId, room: Room, cinfo: &ClientInfo) -> Vec<u8> {

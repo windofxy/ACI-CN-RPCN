@@ -30,6 +30,8 @@ use room_manager::RoomManager;
 mod score_cache;
 use score_cache::ScoresCache;
 mod daily_cleaner;
+mod public_api;
+mod public_api_server;
 mod stat_server;
 mod tss_server;
 mod udp_server;
@@ -190,6 +192,7 @@ impl Server {
 			self.start_udp_server(term_watch.clone()).await?;
 			self.start_tss_server(term_watch.clone()).await?;
 			self.start_stat_server(term_watch.clone(), self.game_tracker.clone()).await?;
+			self.start_public_api_server(term_watch.clone()).await?;
 			self.start_cleaner_task(term_watch.clone(), self.db_pool.clone(), self.client_infos.clone()).await;
 
 			let listener = TcpListener::bind(&addr).await.map_err(|e| io::Error::new(e.kind(), format!("Error binding to <{}>: {}", &addr, e)))?;

@@ -45,17 +45,13 @@ impl Body for TssBody {
 impl Server {
 	pub async fn start_tss_server(&self, term_watch: TerminateWatch) -> io::Result<()> {
 		let host = self.config.read().get_host_ipv4().clone();
-		let tss_port = self
-			.config
-			.read()
-			.get_port()
-			.parse::<u16>()
-			.unwrap_or(31313)
-			.saturating_add(2);
+		let tss_port = self.config.read().get_port().parse::<u16>().unwrap_or(31313).saturating_add(2);
 
 		let addr = format!("{}:{}", host, tss_port);
 
-		let listener = TcpListener::bind(&addr).await.map_err(|e| io::Error::new(e.kind(), format!("TSS server failed to bind to <{}>: {}", &addr, e)))?;
+		let listener = TcpListener::bind(&addr)
+			.await
+			.map_err(|e| io::Error::new(e.kind(), format!("TSS server failed to bind to <{}>: {}", &addr, e)))?;
 
 		info!("TSS HTTP server listening on <{}>", &addr);
 
